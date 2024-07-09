@@ -5,10 +5,67 @@
 		<script defer src="scripts/lib/d3-annotation.min.js"></script>
 		<script defer src="scripts/lib/topo-client.min.js"></script>
 		<script defer type="module" src="scripts/index.js"></script>
+		<style>
+			body {
+				background-color: black;
+			}
+			.scene {
+				padding: 0 5vw;
+				background-color: rgba(256, 256, 256, 0.8);
+				position: sticky;
+				top: 0;
+				display: flex;
+				justify-content: center;
+				flex-direction: column;
+				height: 100vh;
+
+				.scene-centerer {
+					width: 100%;
+					display: flex;
+					justify-content: center;
+					flex-direction: column;
+
+					.container {
+						/* nothing yet */
+					}
+				}
+
+				.overlay {
+					height: 100%;
+					display: flex;
+					align-items: center;
+
+					* {
+						width: 100%;
+					}
+				}
+			}
+		</style>
+
 	</head>
 	<body style="padding: 0; margin: 0;">
-		<div id="content" style="margin: 0 20px;">
-			<div id="map-container">
+		<div id="content" style="margin: 0 15vw;">
+			<div id="intro" style="width: 100%; height: 100vh">
+				Title Page
+			</div>
+			<div id="map-scene" class="scene">
+				<div class="scene-centerer">
+					The <a href="https://www.pwrc.usgs.gov/bbs/">North American
+					Breeding Bird Survey</a> is a cooperative effort
+					to monitor North American bird populations. The following
+					map shows a list of blah.
+					<div id="map-container" class="container"></div>
+				</div>
+			</div>
+			<div id="chart-scene" class="scene">
+				<div class="scene-centerer overlay">
+					Over time, the number of birds observed has steeply
+					declined.
+					<div id="chart-container" class="container"></div>
+				</div>
+			</div>
+			<div style="height: 200vh"></div>
+			<div id="final-scene" class="scene">
 				<input id="year-slider" type="range" min="1995" max="2022"
 				value="1995" style="width: 100%;">
 			</div>

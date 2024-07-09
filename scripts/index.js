@@ -1,9 +1,16 @@
-const yearData = await d3.csv("data/year.csv");
-const yearRouteData = await d3.csv("data/year_route.csv");
-const yearSpeciesData = await d3.csv("data/year_species.csv");
-const routeData = await d3.csv("data/route.csv");
+const minYear = "1995";
+const maxYear = "2022";
+function truncateData(data, { min = minYear, max = maxYear } = {}) {
+	return data.filter(d => d.Year >= min && d.Year <= max);
+}
+function cleanYear(year) {
+	return year == "2020" ? "2019" : year;
+}
 
 // map stuff
+const yearRouteData = truncateData(await d3.csv("data/year_route.csv"));
+const routeData = await d3.csv("data/route.csv");
+
 const routeDataByRouteId = Object.fromEntries(routeData.map(r => [r.Route.replace(/^0+/, ""), r]));
 const yearRouteDataByYear = yearRouteData.reduce((o, c) => {
 	if (c.Year in o) o[c.Year].push(c);
@@ -35,13 +42,7 @@ const mapSvg = d3.select("#map-container")
 	.attr("width", "100%");
 
 function routeMap(year) {
-	if (year === "2020") {
-		year = "2021"; // because no Covid data
-	}
-
-	if (!(year in yearRouteDataByYear)) {
-		return console.error(`${year} is not in the data`);
-	}
+	year = cleanYear(year);
 
 	// wasteful to redraw country stuff
 	mapSvg.selectAll("*").remove();
@@ -116,8 +117,88 @@ function routeMap(year) {
 	*/
 }
 
-routeMap("1995");
-document.getElementById("year-slider").addEventListener("input", e =>
-	routeMap(e.target.value)
-);
+routeMap(minYear);
 
+// chart stuff
+const yearData = truncateData(await d3.csv("data/year.csv"));
+
+const chartWidth = 800;
+const chartHeight = 450;
+const chartSvg = d3.select("#chart-container")
+	.append("svg")
+	.attr("viewBox", `0 0 ${chartWidth + 100} ${chartHeight + 40}`)
+	.attr("width", "100%");
+const chartGroup = chartSvg.append("g")
+	.attr("transform", "translate(65, 10)");
+const yearParser = d3.timeParse("%Y");
+
+function totalCountChart(year) {
+	year = cleanYear(year);
+
+	chartGroup.selectAll("*").remove();
+
+	const yearAxis = d3.scaleTime()
+		.domain(d3.extent(yearData, d => yearParser(d.Year)))
+		.range([0, chartWidth]);
+	chartGroup.append("g")
+		.attr("transform", `translate(0, ${chartHeight})`)
+		.call(d3.axisBottom(yearAxis));
+
+	const countRange = d3.extent(yearData, d => d.SpeciesTotal);
+	const countAxis = d3.scaleLinear()
+		.domain(countRange)
+		.range([chartHeight, 0]);
+	chartGroup.append("g")
+		.call(d3.axisLeft(countAxis));
+
+	const percentAxis = d3.scaleLinear()
+		.domain([countRange[0] / countRange[1], 1])
+		.range([chartHeight, 0]);
+	chartGroup.append("g")
+		.attr("transform", `translate(${chartWidth}, 0)`)
+		.call(d3.axisRight(percentAxis)
+			.tickFormat(v => v * 100 + "%")
+		);
+
+	chartGroup.append("path")
+		.datum(truncateData(yearData, { max: +year + 1 }))
+		.attr("stroke", "black")
+		.attr("fill", "none")
+		.attr("d", d3.line()
+			.x(d => yearAxis(yearParser(d.Year)))
+			.y(d => countAxis(d.SpeciesTotal))
+		);
+}
+totalCountChart(minYear);
+
+const slider = document.getElementById("year-slider");
+slider.addEventListener("input", e => {
+	const year = e.target.value;
+	routeMap(year);
+	totalCountChart(year);
+});
+
+addEventListener("scroll", () => {
+	const totalHeight = document.body.offsetHeight;
+	const scrolledHeight = window.pageYOffset + window.innerHeight;
+	const scrolledPercent = scrolledHeight / totalHeight;
+
+	console.log(scrolledPercent);
+
+	const countChartAnimStart = 0.5;
+	const countChartAnimFinish = 0.75;
+	let year;
+	if (scrolledPercent < countChartAnimStart) {
+		year = minYear - 1;
+	} else if (scrolledPercent < countChartAnimFinish) {
+		const step = (countChartAnimFinish - countChartAnimStart) / (maxYear - minYear);
+		const yearsAway = Math.floor((countChartAnimFinish - scrolledPercent) / countChartAnimFinish / step);
+		year = maxYear - yearsAway;
+	} else {
+		year = maxYear;
+	}
+	slider.value = year;
+	slider.dispatchEvent(new Event("input"));
+});
+
+const yearSpeciesData = await d3.csv("data/year_species.csv");
