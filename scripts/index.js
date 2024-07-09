@@ -13,6 +13,7 @@ function cleanYear(year) {
 		? "2019"
 		: year;
 }
+const tooltip = d3.select("#tooltip");
 
 // map stuff
 const routeData = await d3.csv("data/route.csv");
@@ -51,7 +52,7 @@ for (const entry of yearRouteData) {
 }
 
 const colorScalesForRoute = {};
-const colorSpeciesColors = ["green", "red"];
+const colorSpeciesColors = ["lightgreen", "red"];
 const scale = (max, min) => {
 	max = Math.max(max * 0.8, min * 1.2);
 	min = Math.min(max * 0.8, min * 1.2);
@@ -114,7 +115,19 @@ function routeMap(year) {
 		.attr("transform", d => {
 			const rd = routeDataByStateRouteId[d.State][d.Route];
 			return `translate(${projection([rd.Longitude, rd.Latitude])})`;
+		})
+		.on("mouseover", (_, d) => {
+			return tooltip.style("visibility", "visible")
+				.html(`Total Birds: ${+d.SpeciesTotal}`);
+		})
+		.on("mousemove", (e) => {
+			return tooltip.style("top", `${e.pageY}px`)
+				.style("left", `${e.pageX}px`);
+		})
+		.on("mouseout", () => {
+			return tooltip.style("visibility", "hidden");
 		});
+
 
 	const gradient = mapSvg.append("defs")
 		.append("linearGradient")
@@ -152,11 +165,11 @@ function routeMap(year) {
 			subject: { radius: 75, radiusPadding: 10 },
 		}, {
 			note: { label: "Falling Populations" },
-			x: 625,
+			x: 825,
 			y: 250,
 			dy: -200,
-			dx: 100,
-			subject: { radius: 75, radiusPadding: 10 },
+			dx: -100,
+			subject: { radius: 100, radiusPadding: 10 },
 		}])
 		.type(d3.annotationCalloutCircle);
 
@@ -185,10 +198,10 @@ const chartWidth = 800;
 const chartHeight = 450;
 const chartSvg = d3.select("#chart-container")
 	.append("svg")
-	.attr("viewBox", `0 0 ${chartWidth + 100} ${chartHeight + 40}`)
+	.attr("viewBox", `0 0 ${chartWidth + 160} ${chartHeight + 40}`)
 	.attr("width", "100%");
 const chartGroup = chartSvg.append("g")
-	.attr("transform", "translate(65, 10)");
+	.attr("transform", "translate(95, 10)");
 const yearParser = d3.timeParse("%Y");
 
 function totalCountChart(year) {
@@ -219,7 +232,22 @@ function totalCountChart(year) {
 		.attr("color", "red")
 		.attr("transform", `translate(${chartWidth}, 0)`)
 		.call(d3.axisRight(averageCountAxis));
-
+	chartGroup.append("g")
+		.attr("font-family", "sans-serif")
+		.attr("transform", `translate(${chartWidth}, ${chartHeight / 2}) rotate(90)`)
+		.attr("fill", "red")
+		.attr("text-anchor", "middle")
+		.append("text")
+		.attr("transform", "translate(0, -40)")
+		.text("Average Birds per Route");
+	chartGroup.append("g")
+		.attr("font-family", "sans-serif")
+		.attr("transform", `translate(0, ${chartHeight / 2}) rotate(-90)`)
+		.attr("fill", "blue")
+		.attr("text-anchor", "middle")
+		.append("text")
+		.attr("transform", "translate(0, -70)")
+		.text("Total Birds");
 
 	/*
 	const percentAxis = d3.scaleLinear()
@@ -232,7 +260,6 @@ function totalCountChart(year) {
 		);
 	*/
 
-	const tooltip = d3.select("#tooltip");
 	const data = truncateData(yearData, { max: +year + 1 });
 	chartGroup.append("path")
 		.datum(data)
@@ -255,7 +282,7 @@ function totalCountChart(year) {
 		.attr("r", 5)
 		.on("mouseover", (_, d) => {
 			return tooltip.style("visibility", "visible")
-				.html(+d.SpeciesTotal);
+				.html(`Total Birds: ${+d.SpeciesTotal}`);
 		})
 		.on("mousemove", (e) => {
 			return tooltip.style("top", `${e.pageY}px`)
@@ -286,7 +313,7 @@ function totalCountChart(year) {
 		.on("mouseover", (_, d) => {
 			console.log(d);
 			return tooltip.style("visibility", "visible")
-				.html(`${(+d.AveragePerRoute).toFixed(2)}%`);
+				.html(`Average Birds per Route: ${(+d.AveragePerRoute).toFixed(2)}`);
 		})
 		.on("mousemove", (e) => {
 			return tooltip.style("top", `${e.pageY}px`)
@@ -300,20 +327,14 @@ function totalCountChart(year) {
 	if (year > 1990) {
 		const makeAnnotation = d3.annotation()
 			.annotations([{
-				note: { label: "Average Birds Per Route" },
-				x: 165,
-				y: 100,
-				dy: 50,
-				dx: -10,
-				subject: { radius: 50, radiusPadding: 10 },
-			}, {
-				note: { label: "Total Birds" },
-				x: 175,
-				y: 270,
-				dy: 50,
-				dx: 20,
-				subject: { radius: 50, radiusPadding: 10 },
-			}]);
+				note: { label: "Falling Average Despite Overall Increases" },
+				x: 230,
+				y: 130,
+				dy: 150,
+				dx: 100,
+				subject: { radius: 100, radiusPadding: 10 },
+			}])
+			.type(d3.annotationCalloutCircle);
 
 		chartGroup.append("g")
 			.call(makeAnnotation);
@@ -354,14 +375,14 @@ addEventListener("scroll", () => {
 	console.log(scrolledPercent);
 
 	const countChartAnimStart = 0.25;
-	const countChartAnimFinish = 0.45;
+	const countChartAnimFinish = 0.40;
 	let year1 = yearOffset(scrolledPercent, countChartAnimStart, countChartAnimFinish);
 	if (year1 !== lastChartYear) {
 		lastChartYear = year1;
 		totalCountChart(year1);
 	}
 
-	const mapAnimStart = 0.65;
+	const mapAnimStart = 0.57;
 	const mapAnimFinish = 0.85;
 	let year2 = yearOffset(scrolledPercent, mapAnimStart, mapAnimFinish);
 	if (year2 !== lastMapYear) {
