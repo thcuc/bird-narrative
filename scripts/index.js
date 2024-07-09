@@ -4,6 +4,7 @@ function truncateData(data, { min = minYear, max = maxYear } = {}) {
 	return data.filter(d => d.Year >= min && d.Year <= max);
 }
 function cleanYear(year) {
+	// year missing data
 	return year == "2020" ? "2019" : year;
 }
 
@@ -20,8 +21,8 @@ const yearRouteDataByYear = yearRouteData.reduce((o, c) => {
 const maxMinForRoute = {};
 for (const data of yearRouteData) {
 	maxMinForRoute[data.Route] = {
-		max: Math.max(maxMinForRoute[data.Route]?.max ?? 0, data.SpeciesTotal),
-		min: Math.min(maxMinForRoute[data.Route]?.min ?? 99999, data.SpeciesTotal),
+		max: Math.max(maxMinForRoute[data.Route]?.max ?? 0, +data.SpeciesTotal),
+		min: Math.min(maxMinForRoute[data.Route]?.min ?? 99999, +data.SpeciesTotal),
 	}
 }
 const colorScalesForRoute = {};
@@ -71,7 +72,7 @@ function routeMap(year) {
 		.data(yearRouteDataByYear[year])
 		.enter()
 		.append("circle")
-		.attr("fill", d => colorScalesForRoute[d.Route](d.SpeciesTotal))
+		.attr("fill", d => colorScalesForRoute[d.Route](+d.SpeciesTotal))
 		.attr("r", 3)
 		.attr("transform", d => {
 			const rd = routeDataByRouteId[d.Route];
@@ -119,7 +120,7 @@ function routeMap(year) {
 
 routeMap(minYear);
 
-// chart stuff
+// total count chart stuff
 const yearData = truncateData(await d3.csv("data/year.csv"));
 
 const chartWidth = 800;
@@ -144,7 +145,7 @@ function totalCountChart(year) {
 		.attr("transform", `translate(0, ${chartHeight})`)
 		.call(d3.axisBottom(yearAxis));
 
-	const countRange = d3.extent(yearData, d => d.SpeciesTotal);
+	const countRange = d3.extent(yearData, d => +d.SpeciesTotal);
 	const countAxis = d3.scaleLinear()
 		.domain(countRange)
 		.range([chartHeight, 0]);
@@ -166,7 +167,7 @@ function totalCountChart(year) {
 		.attr("fill", "none")
 		.attr("d", d3.line()
 			.x(d => yearAxis(yearParser(d.Year)))
-			.y(d => countAxis(d.SpeciesTotal))
+			.y(d => countAxis(+d.SpeciesTotal))
 		);
 }
 totalCountChart(minYear);
@@ -201,4 +202,67 @@ addEventListener("scroll", () => {
 	slider.dispatchEvent(new Event("input"));
 });
 
-const yearSpeciesData = await d3.csv("data/year_species.csv");
+// species specific chart stuff
+const wantedSpecies = new Set(["4220"]);
+const yearSpeciesData = truncateData(await d3.csv("data/year_species.csv"))
+	.filter(d => wantedSpecies.has(d.Aou));
+const chartSvg2 = d3.select("#chart-container-2")
+	.append("svg")
+	.attr("viewBox", `0 0 ${chartWidth + 100} ${chartHeight + 40}`)
+	.attr("width", "100%");
+const chartGroup2 = chartSvg2.append("g")
+	.attr("transform", "translate(65, 10)");
+
+/*
+const maxMin = {};
+for (const data of yearSpeciesData) {
+	if (data.Aou in maxMin) continue;
+	maxMin[data.Aou] = {
+		max: yearSpeciesData.find(r => r.Aou === data.Aou && r.Year === maxYear)?.SpeciesTotal,
+		min: yearSpeciesData.find(r => r.Aou === data.Aou && r.Year === minYear)?.SpeciesTotal,
+	}
+}
+const z = [];
+for (const [aou, {min, max}] of Object.entries(maxMin)) {
+	z.push({aou, ch: (max - min) / max, max: +max, min: +min});
+}
+console.log(z.filter(d => !isNaN(d.ch)).sort((a,b) => a.ch - b.ch));
+*/
+
+function speciesCountChart(year) {
+	year = cleanYear(year);
+
+	chartGroup2.selectAll("*").remove();
+
+	const yearAxis = d3.scaleTime()
+		.domain(d3.extent(yearData, d => yearParser(d.Year)))
+		.range([0, chartWidth]);
+	chartGroup2.append("g")
+		.attr("transform", `translate(0, ${chartHeight})`)
+		.call(d3.axisBottom(yearAxis));
+
+	const countRange = d3.extent(yearSpeciesData, d => +d.SpeciesTotal);
+	const countAxis = d3.scaleLinear()
+		.domain(countRange)
+		.range([chartHeight, 0]);
+	chartGroup2.append("g")
+		.call(d3.axisLeft(countAxis));
+
+	const data = d3.group(truncateData(yearSpeciesData, { max: +year + 1 }),
+		d => d.Aou);
+
+	const g = chartGroup2.append("g");
+	g.selectAll("path")
+		.data(data)
+		.enter()
+		.append("path")
+		.attr("stroke", (_, i) => ["red", "green", "yellow", "blue", "orange"][i % 3])
+		.attr("fill", "none")
+		.attr("d", d => {
+			return d3.line()
+				.x(d => yearAxis(yearParser(d.Year)))
+				.y(d => countAxis(+d.SpeciesTotal))(d[1]);
+		});
+}
+
+speciesCountChart(maxYear);
