@@ -564,7 +564,7 @@ addEventListener("scroll", () => {
 	}
 
 	const mapAnimStart = 0.45;
-	const mapAnimFinish = 0.9;
+	const mapAnimFinish = 0.85;
 	let year2 = yearOffset(scrolledPercent, mapAnimStart, mapAnimFinish);
 	if (year2 !== lastMapYear) {
 		lastMapYear = year2;

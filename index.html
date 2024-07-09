@@ -8,6 +8,11 @@
 		<style>
 			body {
 				background-color: black;
+				background-image: url(img/bg.jpg);
+				background-position: center center;
+				background-repeat: no-repeat;
+				background-size: 100% auto;
+				background-attachment: fixed;
 				font-family: Arial;
 			}
 			.title {
@@ -39,12 +44,13 @@
 				}
 			}
 			.section {
-				background-color: rgba(256, 256, 256, 1);
+				background-color: rgba(233, 233, 233, 0.8);
 			}
 			.scene {
+				background-color: rgba(233, 233, 233, 1);
 				position: sticky;
 				top: 0;
-				padding: 0 10vw;
+				padding: 0 7.5vw;
 				display: flex;
 				justify-content: center;
 				flex-direction: column;
@@ -146,7 +152,8 @@
 					</p>
 					<p class="instructions">
 						Mouse over a point to see the birds spotted in that area
-						that year.
+						that year. Note that each route has its own color scale
+						depending on its values over the years.
 					</p>
 					<div id="map-container" class="container"></div>
 				</div>
