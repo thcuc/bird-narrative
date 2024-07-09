@@ -4,8 +4,14 @@ function truncateData(data, { min = minYear, max = maxYear } = {}) {
 	return data.filter(d => d.Year >= min && d.Year <= max);
 }
 function cleanYear(year) {
-	// year missing data
-	return year == "2020" ? "2019" : year;
+	// year missing data because of covid
+	return year < minYear
+		? minYear
+		: year > maxYear
+		? maxYear
+		: year == "2020"
+		? "2019"
+		: year;
 }
 
 // map stuff
@@ -46,10 +52,14 @@ for (const entry of yearRouteData) {
 
 const colorScalesForRoute = {};
 const colorSpeciesColors = ["lightgreen", "red"];
-const scale = (max, min) => d3.scaleLinear()
-	.domain([max * 0.8, min * 1.2])
-	.range(colorSpeciesColors)
-	.clamp(true);
+const scale = (max, min) => {
+	max = Math.max(max * 0.8, min * 1.2);
+	min = Math.min(max * 0.8, min * 1.2);
+	return d3.scaleLinear()
+		.domain([max, min])
+		.range(colorSpeciesColors)
+		.clamp(true);
+}
 for (const [state, routeMaxMin] of Object.entries(maxMinForRoute))
 	for (const [route, { max, min }] of Object.entries(routeMaxMin)) {
 		if (state in colorScalesForRoute) {
@@ -134,18 +144,24 @@ function routeMap(year) {
 
 	const makeAnnotation = d3.annotation()
 		.annotations([{
-			note: { label: "Increased Routes Example" },
+			note: { label: "Increased Coverage" },
 			x: 190,
-			y: 300,
+			y: 290,
 			dy: 120,
 			dx: -75,
+			subject: { radius: 75, radiusPadding: 10 },
+		}, {
+			note: { label: "Falling Populations" },
+			x: 625,
+			y: 250,
+			dy: -200,
+			dx: 100,
 			subject: { radius: 75, radiusPadding: 10 },
 		}])
 		.type(d3.annotationCalloutCircle);
 
 	mapSvg.append("g")
 		.call(makeAnnotation);
-
 
 	/*
 	legend.append("text")
@@ -235,25 +251,27 @@ function totalCountChart(year) {
 			.y(d => averageCountAxis(+d.AveragePerRoute))
 		);
 
-	const makeAnnotation = d3.annotation()
-		.annotations([{
-			note: { label: "Average Birds Sighted Per Route" },
-			x: 300,
-			y: 220,
-			dy: 100,
-			dx: 100,
-			subject: { radius: 50, radiusPadding: 10 },
-		}, {
-			note: { label: "Total Birds Sighted" },
-			x: 420,
-			y: 70,
-			dy: 100,
-			dx: 100,
-			subject: { radius: 50, radiusPadding: 10 },
-		}]);
+	if (year > 1990) {
+		const makeAnnotation = d3.annotation()
+			.annotations([{
+				note: { label: "Average Birds Per Route" },
+				x: 165,
+				y: 100,
+				dy: 50,
+				dx: -10,
+				subject: { radius: 50, radiusPadding: 10 },
+			}, {
+				note: { label: "Total Birds" },
+				x: 175,
+				y: 270,
+				dy: 50,
+				dx: 20,
+				subject: { radius: 50, radiusPadding: 10 },
+			}]);
 
-	chartGroup.append("g")
-		.call(makeAnnotation);
+		chartGroup.append("g")
+			.call(makeAnnotation);
+	}
 }
 totalCountChart(minYear);
 
@@ -264,6 +282,20 @@ slider.addEventListener("input", e => {
 	totalCountChart(year);
 });
 
+function yearOffset(percent, start, finish) {
+	let year;
+	if (percent < start) {
+		year = minYear - 1;
+	} else if (percent < finish) {
+		const step = (maxYear - minYear) / (finish - start);
+		const years = Math.floor(step * (percent - start));
+		year = +minYear + years;
+	} else {
+		year = maxYear;
+	}
+	return year;
+}
+
 addEventListener("scroll", () => {
 	const totalHeight = document.body.offsetHeight;
 	const scrolledHeight = window.pageYOffset + window.innerHeight;
@@ -271,22 +303,15 @@ addEventListener("scroll", () => {
 
 	console.log(scrolledPercent);
 
-	/*
-	const countChartAnimStart = 0.5;
-	const countChartAnimFinish = 0.75;
-	let year;
-	if (scrolledPercent < countChartAnimStart) {
-		year = minYear - 1;
-	} else if (scrolledPercent < countChartAnimFinish) {
-		const step = (countChartAnimFinish - countChartAnimStart) / (maxYear - minYear);
-		const yearsAway = Math.floor((countChartAnimFinish - scrolledPercent) / countChartAnimFinish / step);
-		year = maxYear - yearsAway;
-	} else {
-		year = maxYear;
-	}
-	slider.value = year;
-	slider.dispatchEvent(new Event("input"));
-	*/
+	const countChartAnimStart = 0.25;
+	const countChartAnimFinish = 0.45;
+	let year1 = yearOffset(scrolledPercent, countChartAnimStart, countChartAnimFinish);
+	totalCountChart(year1);
+
+	const mapAnimStart = 0.65;
+	const mapAnimFinish = 0.85;
+	let year2 = yearOffset(scrolledPercent, mapAnimStart, mapAnimFinish);
+	routeMap(year2);
 });
 
 // species specific chart stuff

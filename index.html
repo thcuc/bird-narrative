@@ -8,14 +8,37 @@
 		<style>
 			body {
 				background-color: black;
+				font-family: Arial;
+			}
+			.title {
+				padding: 0 10vw;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				align-items: center;
+
+				h1 {
+					font-size: 3rem;
+				}
+				h2 {
+					font-size: 0.8rem;
+				}
+			}
+			.section {
+				background-color: rgba(256, 256, 256, 1);
 			}
 			.scene {
-				padding: 0 5vw;
-				background-color: rgba(256, 256, 256, 0.8);
+				position: sticky;
+				top: 0;
+				padding: 0 10vw;
 				display: flex;
 				justify-content: center;
 				flex-direction: column;
 				height: 100vh;
+
+				p {
+					font-size: 1.5rem;
+				}
 
 				.scene-centerer {
 					width: 100%;
@@ -43,40 +66,66 @@
 	</head>
 	<body style="padding: 0; margin: 0;">
 		<div id="content" style="margin: 0 15vw;">
-			<div id="chart-scene-2" class="scene">
+			<div id="intro" class="section title" style="height: 100vh">
+				<h1 style="text-align: center">
+					A Look at the 2023 North American Bird Breeding Survey
+					Dataset
+				</h1>
+				<h2>source:
+					<a href="https://www.sciencebase.gov/catalog/item/64ad9c3dd34e70357a292cee">
+						2023 Release - North American Breeding Bird Survey Dataset
+					</a>
+				</h2>
+			</div>
+			<div id="chart-scene" class="scene section">
 				<div class="scene-centerer overlay">
-					Species specific trends
-					<div id="chart-container-2" class="container"></div>
+					<p>
+						The <a href="https://www.pwrc.usgs.gov/bbs/">North
+						American Breeding Bird Survey</a> cooperative effort to
+						monitor North American bird populations. For decades,
+						volunteers collect data to help understand and manage
+						population changes.
+					</p>
+					<p>
+						Aggregated data shows a decline in the number of average
+						birds spotted in an area, and a decline in total number
+						of birds spotted in recent years.
+					</p>
+					(animate graph on scroll)
+					<div id="chart-container" class="container"></div>
 				</div>
 			</div>
-			<div id="intro" style="width: 100%; height: 100vh">
-				Title Page
+			<div style="height: 200vh" class="scroll-anim"></div>
+			<div id="map-scene" class="scene section">
+				<p>
+					While total bird sightings has increased historically, this
+					is due to an increased number of routes being surveyed from
+					before.
+				</p>
+				<p>
+					As time passes, bird sightings in a route tend to decrease.
+					This is not an isolated issue, and can be seen across the
+					United States.
+				</p>
+				(animate map on scroll)
+				<div class="scene-centerer">
+					<div id="map-container" class="container"></div>
+				</div>
+			</div>
+			<div style="height: 200vh" class="scroll-anim"></div>
+			<div id="chart-scene-2" class="scene section">
+				<p>
+					While some populations are falling, conservation efforts
+					maintain others...
+				</p>
+				(no animation, clickable things to bring up specific info)
+				<div class="scene-centerer overlay">
+					<div id="chart-container-2" class="container"></div>
+				</div>
 			</div>
 			<div style="position: sticky; top: 0">
 				<input id="year-slider" type="range" min="1980" max="2022"
 				value="1980" style="width: 100%;">
-			</div>
-			<div id="map-scene" class="scene">
-				<div class="scene-centerer">
-					The <a href="https://www.pwrc.usgs.gov/bbs/">North American
-					Breeding Bird Survey</a> is a cooperative effort
-					to monitor North American bird populations. The following
-					map shows a list of blah.
-					<div id="map-container" class="container"></div>
-				</div>
-			</div>
-			<div id="chart-scene" class="scene">
-				<div class="scene-centerer overlay">
-					Over time, the number of birds observed has steeply
-					declined.
-					<div id="chart-container" class="container"></div>
-				</div>
-			</div>
-
-			<div style="height: 200vh"></div>
-			<div id="final-scene" class="scene">
-				<input id="year-slider" type="range" min="1995" max="2022"
-				value="1995" style="width: 100%;">
 			</div>
 		</div>
 	</body>
