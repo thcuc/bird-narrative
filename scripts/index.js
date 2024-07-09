@@ -572,4 +572,4 @@ addEventListener("scroll", () => {
 	}
 });
 
-
+document.getElementById("loading").innerText = "";
