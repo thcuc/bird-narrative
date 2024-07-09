@@ -212,6 +212,7 @@ addEventListener("scroll", () => {
 
 	console.log(scrolledPercent);
 
+	/*
 	const countChartAnimStart = 0.5;
 	const countChartAnimFinish = 0.75;
 	let year;
@@ -226,6 +227,7 @@ addEventListener("scroll", () => {
 	}
 	slider.value = year;
 	slider.dispatchEvent(new Event("input"));
+	*/
 });
 
 // species specific chart stuff
