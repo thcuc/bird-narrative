@@ -51,7 +51,7 @@ for (const entry of yearRouteData) {
 }
 
 const colorScalesForRoute = {};
-const colorSpeciesColors = ["lightgreen", "red"];
+const colorSpeciesColors = ["green", "red"];
 const scale = (max, min) => {
 	max = Math.max(max * 0.8, min * 1.2);
 	min = Math.min(max * 0.8, min * 1.2);
@@ -95,7 +95,7 @@ function routeMap(year) {
 	// states
 	mapSvg.append("g")
 		.attr("stroke", "#ddd")
-		.attr("fill", "#eee")
+		.attr("fill", "none")
 		.selectAll("path")
 		.data(topojson.feature(statesMapData, statesMapData.objects.states).features)
 		.enter().append("path")
@@ -103,8 +103,8 @@ function routeMap(year) {
 
 	// points
 	mapSvg.append("g")
-		.attr("stroke", "black")
-		.attr("fill-opacity", 0.5)
+		// .attr("stroke", "black")
+		.attr("fill-opacity", 0.8)
 		.selectAll("circle")
 		.data(yearRouteDataByYear[year])
 		.enter()
@@ -220,6 +220,7 @@ function totalCountChart(year) {
 		.attr("transform", `translate(${chartWidth}, 0)`)
 		.call(d3.axisRight(averageCountAxis));
 
+
 	/*
 	const percentAxis = d3.scaleLinear()
 		.domain([countRange[0] / countRange[1], 1])
@@ -231,6 +232,7 @@ function totalCountChart(year) {
 		);
 	*/
 
+	const tooltip = d3.select("#tooltip");
 	const data = truncateData(yearData, { max: +year + 1 });
 	chartGroup.append("path")
 		.datum(data)
@@ -241,6 +243,27 @@ function totalCountChart(year) {
 			.x(d => yearAxis(yearParser(d.Year)))
 			.y(d => countAxis(+d.SpeciesTotal))
 		);
+	chartGroup.append("g")
+		.attr("stroke", "black")
+		.attr("fill", "white")
+		.selectAll("circle")
+		.data(data)
+		.enter()
+		.append("circle")
+		.attr("cy", d => countAxis(+d.SpeciesTotal))
+		.attr("cx", d => yearAxis(yearParser(d.Year)))
+		.attr("r", 5)
+		.on("mouseover", (_, d) => {
+			return tooltip.style("visibility", "visible")
+				.html(+d.SpeciesTotal);
+		})
+		.on("mousemove", (e) => {
+			return tooltip.style("top", `${e.pageY}px`)
+				.style("left", `${e.pageX}px`);
+		})
+		.on("mouseout", () => {
+			return tooltip.style("visibility", "hidden");
+		});
 	chartGroup.append("path")
 		.datum(data)
 		.attr("stroke", "red")
@@ -250,7 +273,30 @@ function totalCountChart(year) {
 			.x(d => yearAxis(yearParser(d.Year)))
 			.y(d => averageCountAxis(+d.AveragePerRoute))
 		);
+	chartGroup.append("g")
+		.attr("stroke", "black")
+		.attr("fill", "white")
+		.selectAll("circle")
+		.data(data)
+		.enter()
+		.append("circle")
+		.attr("cy", d => averageCountAxis(d.AveragePerRoute))
+		.attr("cx", d => yearAxis(yearParser(d.Year)))
+		.attr("r", 5)
+		.on("mouseover", (_, d) => {
+			console.log(d);
+			return tooltip.style("visibility", "visible")
+				.html(`${(+d.AveragePerRoute).toFixed(2)}%`);
+		})
+		.on("mousemove", (e) => {
+			return tooltip.style("top", `${e.pageY}px`)
+				.style("left", `${e.pageX}px`);
+		})
+		.on("mouseout", () => {
+			return tooltip.style("visibility", "hidden");
+		});
 
+	
 	if (year > 1990) {
 		const makeAnnotation = d3.annotation()
 			.annotations([{
@@ -275,12 +321,14 @@ function totalCountChart(year) {
 }
 totalCountChart(minYear);
 
+/*
 const slider = document.getElementById("year-slider");
 slider.addEventListener("input", e => {
 	const year = e.target.value;
 	routeMap(year);
 	totalCountChart(year);
 });
+*/
 
 function yearOffset(percent, start, finish) {
 	let year;
