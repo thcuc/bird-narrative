@@ -9,29 +9,55 @@ function cleanYear(year) {
 }
 
 // map stuff
-const yearRouteData = truncateData(await d3.csv("data/year_route.csv"));
 const routeData = await d3.csv("data/route.csv");
-
-const routeDataByRouteId = Object.fromEntries(routeData.map(r => [r.Route.replace(/^0+/, ""), r]));
-const yearRouteDataByYear = yearRouteData.reduce((o, c) => {
-	if (c.Year in o) o[c.Year].push(c);
-	else o[c.Year] = [c];
-	return o;
-});
-const maxMinForRoute = {};
-for (const data of yearRouteData) {
-	maxMinForRoute[data.Route] = {
-		max: Math.max(maxMinForRoute[data.Route]?.max ?? 0, +data.SpeciesTotal),
-		min: Math.min(maxMinForRoute[data.Route]?.min ?? 99999, +data.SpeciesTotal),
+const routeDataByStateRouteId = {};
+for (const entry of routeData) {
+	const state = entry.State.replace(/^0+/, "");
+	const route = entry.Route.replace(/^0+/, "");
+	if (state in routeDataByStateRouteId) {
+		routeDataByStateRouteId[state][route] = entry;
+	} else {
+		routeDataByStateRouteId[state] = { [route]: entry };
 	}
 }
+
+const yearRouteData = truncateData(await d3.csv("data/year_route.csv"));
+const yearRouteDataByYear = {};
+const maxMinForRoute = {};
+for (const entry of yearRouteData) {
+	if (entry.Year in yearRouteDataByYear) {
+		yearRouteDataByYear[entry.Year].push(entry);
+	} else {
+		yearRouteDataByYear[entry.Year] = [entry];
+	}
+
+	if (entry.State in maxMinForRoute) {
+		maxMinForRoute[entry.State][entry.Route] = {
+			max: Math.max(maxMinForRoute[entry.State]?.[entry.Route]?.max ?? 0, +entry.SpeciesTotal),
+			min: Math.min(maxMinForRoute[entry.State]?.[entry.Route]?.min ?? 999_999_999, +entry.SpeciesTotal),
+		}
+	} else {
+		maxMinForRoute[entry.State] = { [entry.Route]: {
+			max: +entry.SpeciesTotal,
+			min: +entry.SpeciesTotal,
+		} };
+	}
+}
+
 const colorScalesForRoute = {};
 const colorSpeciesColors = ["lightgreen", "red"];
-for (const [route, { max, min }] of Object.entries(maxMinForRoute))
-	colorScalesForRoute[route] = d3.scaleLog()
-		.domain([max, min])
-		.range(colorSpeciesColors)
-		.clamp(true);
+const scale = (max, min) => d3.scaleLinear()
+	.domain([max * 0.8, min * 1.2])
+	.range(colorSpeciesColors)
+	.clamp(true);
+for (const [state, routeMaxMin] of Object.entries(maxMinForRoute))
+	for (const [route, { max, min }] of Object.entries(routeMaxMin)) {
+		if (state in colorScalesForRoute) {
+			colorScalesForRoute[state][route] = scale(max, min);
+		} else {
+			colorScalesForRoute[state] = { [route]: scale(max, min) };
+		}
+	}
 
 const mapWidth = 975;
 const mapHeight = 610;
@@ -67,15 +93,15 @@ function routeMap(year) {
 
 	// points
 	mapSvg.append("g")
-		.attr("stroke", "black")
+		.attr("fill-opacity", 0.5)
 		.selectAll("circle")
 		.data(yearRouteDataByYear[year])
 		.enter()
 		.append("circle")
-		.attr("fill", d => colorScalesForRoute[d.Route](+d.SpeciesTotal))
+		.attr("fill", d => colorScalesForRoute[d.State][d.Route](+d.SpeciesTotal))
 		.attr("r", 3)
 		.attr("transform", d => {
-			const rd = routeDataByRouteId[d.Route];
+			const rd = routeDataByStateRouteId[d.State][d.Route];
 			return `translate(${projection([rd.Longitude, rd.Latitude])})`;
 		});
 
