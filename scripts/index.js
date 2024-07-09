@@ -344,6 +344,8 @@ function yearOffset(percent, start, finish) {
 	return year;
 }
 
+let lastChartYear = minYear;
+let lastMapYear = minYear;
 addEventListener("scroll", () => {
 	const totalHeight = document.body.offsetHeight;
 	const scrolledHeight = window.pageYOffset + window.innerHeight;
@@ -354,12 +356,18 @@ addEventListener("scroll", () => {
 	const countChartAnimStart = 0.25;
 	const countChartAnimFinish = 0.45;
 	let year1 = yearOffset(scrolledPercent, countChartAnimStart, countChartAnimFinish);
-	totalCountChart(year1);
+	if (year1 !== lastChartYear) {
+		lastChartYear = year1;
+		totalCountChart(year1);
+	}
 
 	const mapAnimStart = 0.65;
 	const mapAnimFinish = 0.85;
 	let year2 = yearOffset(scrolledPercent, mapAnimStart, mapAnimFinish);
-	routeMap(year2);
+	if (year2 !== lastMapYear) {
+		lastMapYear = year2;
+		routeMap(year2);
+	}
 });
 
 // species specific chart stuff
