@@ -80,6 +80,7 @@ const mapSvg = d3.select("#map-container")
 	.attr("width", "100%");
 
 function routeMap(year) {
+	const oYear = year;
 	year = cleanYear(year);
 
 	// wasteful to redraw country stuff
@@ -104,7 +105,7 @@ function routeMap(year) {
 
 	// points
 	mapSvg.append("g")
-		// .attr("stroke", "black")
+		.attr("stroke", "black")
 		.attr("fill-opacity", 0.8)
 		.selectAll("circle")
 		.data(yearRouteDataByYear[year])
@@ -128,7 +129,6 @@ function routeMap(year) {
 			return tooltip.style("visibility", "hidden");
 		});
 
-
 	const gradient = mapSvg.append("defs")
 		.append("linearGradient")
 		.attr("id", "gradient")
@@ -143,7 +143,6 @@ function routeMap(year) {
 		.append("stop")
 		.style("stop-color", d => d)
 		.attr("offset", (_, i) => ((i + 0.8) / colorSpeciesColors.length * 100)  + "%");
-
 
 	const legend = mapSvg.append("g")
 		.attr("transform", "translate(30, 0)");
@@ -174,7 +173,14 @@ function routeMap(year) {
 		.type(d3.annotationCalloutCircle);
 
 	mapSvg.append("g")
+		.attr("pointer-events", "none")
 		.call(makeAnnotation);
+
+	mapSvg.append("text")
+		.attr("fill", "black")
+		.attr("transform", "translate(750, 100)")
+		.attr("font-size", "2rem")
+		.text(oYear);
 
 	/*
 	legend.append("text")
@@ -311,7 +317,6 @@ function totalCountChart(year) {
 		.attr("cx", d => yearAxis(yearParser(d.Year)))
 		.attr("r", 5)
 		.on("mouseover", (_, d) => {
-			console.log(d);
 			return tooltip.style("visibility", "visible")
 				.html(`Average Birds per Route: ${(+d.AveragePerRoute).toFixed(2)}`);
 		})
@@ -337,6 +342,7 @@ function totalCountChart(year) {
 			.type(d3.annotationCalloutCircle);
 
 		chartGroup.append("g")
+			.attr("pointer-events", "none")
 			.call(makeAnnotation);
 	}
 }
@@ -365,34 +371,50 @@ function yearOffset(percent, start, finish) {
 	return year;
 }
 
-let lastChartYear = minYear;
-let lastMapYear = minYear;
-addEventListener("scroll", () => {
-	const totalHeight = document.body.offsetHeight;
-	const scrolledHeight = window.pageYOffset + window.innerHeight;
-	const scrolledPercent = scrolledHeight / totalHeight;
-
-	console.log(scrolledPercent);
-
-	const countChartAnimStart = 0.25;
-	const countChartAnimFinish = 0.40;
-	let year1 = yearOffset(scrolledPercent, countChartAnimStart, countChartAnimFinish);
-	if (year1 !== lastChartYear) {
-		lastChartYear = year1;
-		totalCountChart(year1);
-	}
-
-	const mapAnimStart = 0.57;
-	const mapAnimFinish = 0.85;
-	let year2 = yearOffset(scrolledPercent, mapAnimStart, mapAnimFinish);
-	if (year2 !== lastMapYear) {
-		lastMapYear = year2;
-		routeMap(year2);
-	}
-});
-
 // species specific chart stuff
-const wantedSpecies = new Set(["6140", "7190", "6882", "5300", "4200", "6810", "5738", "4590", "3050", "4330"]);
+
+// see data/SpeciesList.txt for translation
+const aouData = {
+	"7190": {
+		name: "Bewick's Wren",
+		ele: document.getElementById("wren"),
+		blurb: "The benwick's wren has virtually disappeared from the Eastern " +
+			"United States. In 1984, Maryland marked the wren as endangered, " +
+			"and in 2014, the North American Bird Conservation Initiative has " +
+			"added the wren to its watchlist.",
+		url: "https://en.wikipedia.org/wiki/Bewick's_wren",
+		color: "#a2845d"
+	},
+	"6810": {
+		name: "Common Yellowthroat",
+		ele: document.getElementById("yellowthroat"),
+		blurb: "The common yellowthroat's population has not shifted much " +
+			"across the years, though it has been slowly declining.",
+		url: "https://en.wikipedia.org/wiki/Common_yellowthroat",
+		color: "#b6ab00",
+	},
+	"3050": {
+		name: "Greater Prairie-Chicken",
+		ele: document.getElementById("chicken"),
+		blurb: "The greater prairie-chicken was almost extinct in the early " +
+			"1900s due to overhunting. Nowadays, the greatest threat to the " +
+			"species is habitat loss when converting prairies to farmland. In " +
+			"2006, the Central Wisconsin Prairie Chicken Festival was started " +
+			"to bring awareness to this bird.",
+		url: "https://en.wikipedia.org/wiki/Greater_prairie-chicken",
+		color: "#f9ba21",
+	},
+	"4330": {
+		name: "Rufous Hummingbird",
+		ele: document.getElementById("hummingbird"),
+		blurb: "The rufous hummingbird was listed as \"near threatened\" by " +
+			"The International Union for Conservation of Nature in 2018 due to " +
+			"a global decline in insects, which are its main food source.",
+		url: "https://en.wikipedia.org/wiki/Rufous_hummingbird",
+		color: "#d1312f",
+	}
+};
+const wantedSpecies = new Set(["7190", "6810", "3050", "4330"]);
 const yearSpeciesData = truncateData(await d3.csv("data/year_species.csv"))
 	.filter(d => wantedSpecies.has(d.Aou));
 const chartSvg2 = d3.select("#chart-container-2")
@@ -401,6 +423,18 @@ const chartSvg2 = d3.select("#chart-container-2")
 	.attr("width", "100%");
 const chartGroup2 = chartSvg2.append("g")
 	.attr("transform", "translate(65, 10)");
+const modal = document.getElementById("modal");
+document.getElementById("modal-close").addEventListener("click", () => {
+	modal.style.visibility = "hidden";
+});
+
+function openSpeciesPopup(aou) {
+	const b = aouData[aou];
+	document.getElementById("name").innerText = b.name;
+	document.getElementById("blurb").innerText = b.blurb;
+	document.getElementById("link").href = b.url;
+	modal.style.visibility = "visible";
+}
 
 function speciesCountChart(year) {
 	year = cleanYear(year);
@@ -435,19 +469,73 @@ function speciesCountChart(year) {
 		d => d.Aou);
 
 	const g = chartGroup2.append("g")
-		.attr("stroke-width", 3)
-		.attr("fill", "none");
+		.attr("stroke-width", 5)
+		.attr("stroke-opacity", 0.3)
+		.attr("fill", "none")
+		.attr("cursor", "pointer");
 	g.selectAll("path")
 		.data(data)
 		.enter()
 		.append("path")
-		.attr("stroke", (_, i) => ["red", "green", "yellow", "blue", "orange"][i % 5])
+		.attr("stroke", d => aouData[d[0]].color)
 		.attr("d", d => {
 			const max = d3.max(d[1], d => +d.SpeciesTotal);
 			return d3.line()
 				.x(d => yearAxis(yearParser(d.Year)))
 				.y(d => percentAxis(d.SpeciesTotal / max))(d[1]);
+		})
+		.on("click", (e, d) => {
+			e.target.setAttribute("stroke-opacity", 0.3);
+			openSpeciesPopup(d[0]);
+			return tooltip.style("visibility", "hidden")
+		})
+		.on("mouseover", (e, d) => {
+			e.target.setAttribute("stroke-opacity", 1);
+			const b = aouData[d[0]];
+			b.ele.style.filter = "brightness(1.2)";
+			return tooltip.style("visibility", "visible")
+				.html(`${b.name}`);
+		})
+		.on("mousemove", (e) => {
+			return tooltip.style("top", `${e.pageY + 10}px`)
+				.style("left", `${e.pageX + 10}px`);
+		})
+		.on("mouseout", (e, d) => {
+			e.target.setAttribute("stroke-opacity", 0.3);
+			const b = aouData[d[0]];
+			b.ele.style.filter = "";
+			return tooltip.style("visibility", "hidden")
 		});
 }
-
 speciesCountChart(maxYear);
+
+let lastChartYear = minYear;
+let lastMapYear = minYear;
+addEventListener("scroll", () => {
+	// reset visibility otherwise it doesnt follow the mouse
+	tooltip.style("visibility", "hidden");
+
+	const totalHeight = document.body.offsetHeight;
+	const scrolledHeight = window.pageYOffset + window.innerHeight;
+	const scrolledPercent = scrolledHeight / totalHeight;
+
+	console.log(scrolledPercent);
+
+	const countChartAnimStart = 0.20;
+	const countChartAnimFinish = 0.35;
+	let year1 = yearOffset(scrolledPercent, countChartAnimStart, countChartAnimFinish);
+	if (year1 !== lastChartYear) {
+		lastChartYear = year1;
+		totalCountChart(year1);
+	}
+
+	const mapAnimStart = 0.45;
+	const mapAnimFinish = 0.9;
+	let year2 = yearOffset(scrolledPercent, mapAnimStart, mapAnimFinish);
+	if (year2 !== lastMapYear) {
+		lastMapYear = year2;
+		routeMap(year2);
+	}
+});
+
+

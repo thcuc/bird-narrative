@@ -24,6 +24,20 @@
 					font-size: 0.8rem;
 				}
 			}
+			.bird-grid {
+				display: flex;
+				flex-direction: row;
+				flex-wrap: wrap;
+				gap: 10px;
+				margin-bottom: 20px;
+
+				.center-image {
+					display: flex;
+					justify-content: center;
+					flex: 0 0 calc(25% - 10px);
+					border: 1px solid black;
+				}
+			}
 			.section {
 				background-color: rgba(256, 256, 256, 1);
 			}
@@ -37,7 +51,11 @@
 				height: 100vh;
 
 				p {
-					font-size: 1.5rem;
+					font-size: 1.2rem;
+				}
+				p.instructions {
+					font-size: 0.8rem;
+					color: grey;
 				}
 
 				.scene-centerer {
@@ -67,6 +85,20 @@
 		<div id="tooltip" style="position: absolute; visibility: hidden;
 			z-index: 1; padding: 10px; border: 1px black solid;
 			border-radius: 5px; background-color: white;"></div>
+		<div id="modal" style="position: fixed; visibility: hidden; left: 50%;
+				 top: 50%; transform: translate(-50%, -50%); z-index: 2;
+				 padding: 10px; border: 1px black solid; background-color:
+				 white;">
+			<div style="height: 30px">
+				<button id="modal-close" style="position: absolute; right: 10px;
+							top: 10px;">
+					X
+				</button>
+			</div>
+			<h1 id="name"></h1>
+			<p id="blurb"></p>
+			<a id="link" style="font-size: 0.5rem; color:grey">Read more on Wikipedia</a>
+		</div>
 		<div id="content" style="margin: 0 15vw;">
 			<div id="intro" class="section title" style="height: 100vh">
 				<h1 style="text-align: center">
@@ -93,42 +125,65 @@
 						birds spotted in an area, and a decline in total number
 						of birds spotted in recent years.
 					</p>
+					<p class="instructions">
+						Mouse over a point to see the actual number.
+					</p>
 					<div id="chart-container" class="container"></div>
 				</div>
 			</div>
 			<div style="height: 200vh" class="scroll-anim"></div>
 			<div id="map-scene" class="scene section">
-				<p>
-					While total bird sightings has increased historically, this
-					is due to an increased number of routes being surveyed from
-					before.
-				</p>
-				<p>
-					As time passes, bird sightings in a route tend to decrease.
-					This is not an isolated issue, and can be seen across the
-					United States.
-				</p>
 				<div class="scene-centerer">
+					<p>
+						While total bird sightings has increased historically, this
+						is due to an increased number of routes being surveyed from
+						before.
+					</p>
+					<p>
+						As time passes, bird sightings in a route tend to decrease.
+						This is not an isolated issue, and can be seen across the
+						United States.
+					</p>
+					<p class="instructions">
+						Mouse over a point to see the birds spotted in that area
+						that year.
+					</p>
 					<div id="map-container" class="container"></div>
 				</div>
 			</div>
-			<div style="height: 300vh" class="scroll-anim"></div>
-			<div id="chart-scene-2" class="scene section">
-				<p>
-					While some populations are falling, conservation efforts
-					maintain others...
-				</p>
-				(no animation, clickable things to bring up specific info)
+			<div style="height: 500vh" class="scroll-anim"></div>
+			<div id="chart-scene-2" class="scene section" style="height: max(auto,
+					 100vh);">
 				<div class="scene-centerer overlay">
+					<p>
+						Let's take a look at some specific birds.
+					</p>
+					<p>
+						Some have declining populations but are still populous,
+						some have recently been classified as threatened, and
+						others' populations have rebounded due to conservation
+						efforts.
+					</p>
+					<p class="instructions">
+						Click a line in the chart for more information.
+					</p>
+					<div class="bird-grid">
+						<div class="center-image">
+							<img src="img/chicken.jpg" id="chicken">
+						</div>
+						<div class="center-image">
+							<img src="img/hummingbird.jpg" id="hummingbird">
+						</div>
+						<div class="center-image">
+							<img src="img/wren.jpg" id="wren">
+						</div>
+						<div class="center-image">
+							<img src="img/yellowthroat.jpg" id="yellowthroat">
+						</div>
+					</div>
 					<div id="chart-container-2" class="container"></div>
 				</div>
 			</div>
-			<!--
-			<div style="position: sticky; top: 0">
-				<input id="year-slider" type="range" min="1980" max="2022"
-				value="1980" style="width: 100%;">
-			</div>
-			-->
 		</div>
 	</body>
 </html>
