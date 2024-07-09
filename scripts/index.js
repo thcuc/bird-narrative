@@ -103,7 +103,6 @@ function routeMap(year) {
 		.enter().append("path")
 		.attr("d", d3.geoPath())
 
-	// points
 	mapSvg.append("g")
 		.attr("stroke", "black")
 		.attr("fill-opacity", 0.8)
@@ -149,7 +148,7 @@ function routeMap(year) {
 
 	legend.append("rect")
 		.attr("x", mapWidth - 60 - 100)
-		.attr("y", mapHeight - 10 - 15)
+		.attr("y", mapHeight - 10 - 25)
 		.attr("width", 100)
 		.attr("height", 10)
 		.style("fill", "url(#gradient)");
@@ -194,8 +193,6 @@ function routeMap(year) {
 		.text(minSpeciesValue);
 	*/
 }
-
-routeMap(minYear);
 
 // total count chart stuff
 const yearData = truncateData(await d3.csv("data/year.csv"));
@@ -345,8 +342,22 @@ function totalCountChart(year) {
 			.attr("pointer-events", "none")
 			.call(makeAnnotation);
 	}
+
+	if (year > 1995) {
+		const makeAnnotation = d3.annotation()
+			.annotations([{
+				note: { label: "Year max birds sighted (1995)" },
+				x: 285,
+				y: 0,
+				dy: 150,
+				dx: 100,
+				subject: { radius: 100, radiusPadding: 10 },
+			}])
+		chartGroup.append("g")
+			.attr("pointer-events", "none")
+			.call(makeAnnotation);
+	}
 }
-totalCountChart(minYear);
 
 /*
 const slider = document.getElementById("year-slider");
@@ -464,6 +475,13 @@ function speciesCountChart(year) {
 		.call(d3.axisLeft(percentAxis)
 			.tickFormat(v => v * 100 + "%")
 		)
+	chartGroup2.append("g")
+		.attr("font-family", "sans-serif")
+		.attr("transform", `translate(30, ${chartHeight / 2}) rotate(-90)`)
+		.attr("text-anchor", "middle")
+		.append("text")
+		.attr("transform", "translate(0, -70)")
+		.text("% of Max Spotted in a Year");
 
 	const data = d3.group(truncateData(yearSpeciesData, { max: +year + 1 }),
 		d => d.Aou);
@@ -506,7 +524,23 @@ function speciesCountChart(year) {
 			b.ele.style.filter = "";
 			return tooltip.style("visibility", "hidden")
 		});
+
+	const makeAnnotation = d3.annotation()
+		.annotations([{
+			note: { label: "Year max birds sighted (1995)" },
+			x: 285,
+			y: 0,
+			dy: 175,
+			dx: 100,
+			subject: { radius: 100, radiusPadding: 10 },
+		}])
+	chartGroup2.append("g")
+		.attr("pointer-events", "none")
+		.call(makeAnnotation);
 }
+
+routeMap(minYear);
+totalCountChart(minYear);
 speciesCountChart(maxYear);
 
 let lastChartYear = minYear;
