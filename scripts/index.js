@@ -1,4 +1,4 @@
-const minYear = "1995";
+const minYear = "1980";
 const maxYear = "2022";
 function truncateData(data, { min = minYear, max = maxYear } = {}) {
 	return data.filter(d => d.Year >= min && d.Year <= max);
@@ -93,19 +93,19 @@ function routeMap(year) {
 
 	// points
 	mapSvg.append("g")
+		.attr("stroke", "black")
 		.attr("fill-opacity", 0.5)
 		.selectAll("circle")
 		.data(yearRouteDataByYear[year])
 		.enter()
 		.append("circle")
 		.attr("fill", d => colorScalesForRoute[d.State][d.Route](+d.SpeciesTotal))
-		.attr("r", 3)
+		.attr("r", 2.5)
 		.attr("transform", d => {
 			const rd = routeDataByStateRouteId[d.State][d.Route];
 			return `translate(${projection([rd.Longitude, rd.Latitude])})`;
 		});
 
-	/*
 	const gradient = mapSvg.append("defs")
 		.append("linearGradient")
 		.attr("id", "gradient")
@@ -119,19 +119,35 @@ function routeMap(year) {
 		.enter()
 		.append("stop")
 		.style("stop-color", d => d)
-		.attr("offset", (d, i) => (i / colorSpeciesColors.length * 100)  + "%");
+		.attr("offset", (_, i) => ((i + 0.8) / colorSpeciesColors.length * 100)  + "%");
 
 
 	const legend = mapSvg.append("g")
-		.attr("transform", "translate(0, -150)");
+		.attr("transform", "translate(30, 0)");
 
 	legend.append("rect")
 		.attr("x", mapWidth - 60 - 100)
 		.attr("y", mapHeight - 10 - 15)
-		.attr("width", 150)
+		.attr("width", 100)
 		.attr("height", 10)
 		.style("fill", "url(#gradient)");
 
+	const makeAnnotation = d3.annotation()
+		.annotations([{
+			note: { label: "Increased Routes Example" },
+			x: 190,
+			y: 300,
+			dy: 120,
+			dx: -75,
+			subject: { radius: 75, radiusPadding: 10 },
+		}])
+		.type(d3.annotationCalloutCircle);
+
+	mapSvg.append("g")
+		.call(makeAnnotation);
+
+
+	/*
 	legend.append("text")
 		.attr("x", mapWidth - 50 - 150 + 25)
 		.attr("y", mapHeight - 10 - 10 + 20)
@@ -176,8 +192,19 @@ function totalCountChart(year) {
 		.domain(countRange)
 		.range([chartHeight, 0]);
 	chartGroup.append("g")
+		.attr("color", "blue")
 		.call(d3.axisLeft(countAxis));
 
+	const averageCountRange = d3.extent(yearData, d => +d.AveragePerRoute);
+	const averageCountAxis = d3.scaleLinear()
+		.domain(averageCountRange)
+		.range([chartHeight, 0]);
+	chartGroup.append("g")
+		.attr("color", "red")
+		.attr("transform", `translate(${chartWidth}, 0)`)
+		.call(d3.axisRight(averageCountAxis));
+
+	/*
 	const percentAxis = d3.scaleLinear()
 		.domain([countRange[0] / countRange[1], 1])
 		.range([chartHeight, 0]);
@@ -186,15 +213,47 @@ function totalCountChart(year) {
 		.call(d3.axisRight(percentAxis)
 			.tickFormat(v => v * 100 + "%")
 		);
+	*/
 
+	const data = truncateData(yearData, { max: +year + 1 });
 	chartGroup.append("path")
-		.datum(truncateData(yearData, { max: +year + 1 }))
-		.attr("stroke", "black")
+		.datum(data)
+		.attr("stroke", "blue")
+		.attr("stroke-width", 3)
 		.attr("fill", "none")
 		.attr("d", d3.line()
 			.x(d => yearAxis(yearParser(d.Year)))
 			.y(d => countAxis(+d.SpeciesTotal))
 		);
+	chartGroup.append("path")
+		.datum(data)
+		.attr("stroke", "red")
+		.attr("stroke-width", 3)
+		.attr("fill", "none")
+		.attr("d", d3.line()
+			.x(d => yearAxis(yearParser(d.Year)))
+			.y(d => averageCountAxis(+d.AveragePerRoute))
+		);
+
+	const makeAnnotation = d3.annotation()
+		.annotations([{
+			note: { label: "Average Birds Sighted Per Route" },
+			x: 300,
+			y: 220,
+			dy: 100,
+			dx: 100,
+			subject: { radius: 50, radiusPadding: 10 },
+		}, {
+			note: { label: "Total Birds Sighted" },
+			x: 420,
+			y: 70,
+			dy: 100,
+			dx: 100,
+			subject: { radius: 50, radiusPadding: 10 },
+		}]);
+
+	chartGroup.append("g")
+		.call(makeAnnotation);
 }
 totalCountChart(minYear);
 
@@ -231,7 +290,7 @@ addEventListener("scroll", () => {
 });
 
 // species specific chart stuff
-const wantedSpecies = new Set(["4220"]);
+const wantedSpecies = new Set(["6140", "7190", "6882", "5300", "4200", "6810", "5738", "4590", "3050", "4330"]);
 const yearSpeciesData = truncateData(await d3.csv("data/year_species.csv"))
 	.filter(d => wantedSpecies.has(d.Aou));
 const chartSvg2 = d3.select("#chart-container-2")
@@ -240,22 +299,6 @@ const chartSvg2 = d3.select("#chart-container-2")
 	.attr("width", "100%");
 const chartGroup2 = chartSvg2.append("g")
 	.attr("transform", "translate(65, 10)");
-
-/*
-const maxMin = {};
-for (const data of yearSpeciesData) {
-	if (data.Aou in maxMin) continue;
-	maxMin[data.Aou] = {
-		max: yearSpeciesData.find(r => r.Aou === data.Aou && r.Year === maxYear)?.SpeciesTotal,
-		min: yearSpeciesData.find(r => r.Aou === data.Aou && r.Year === minYear)?.SpeciesTotal,
-	}
-}
-const z = [];
-for (const [aou, {min, max}] of Object.entries(maxMin)) {
-	z.push({aou, ch: (max - min) / max, max: +max, min: +min});
-}
-console.log(z.filter(d => !isNaN(d.ch)).sort((a,b) => a.ch - b.ch));
-*/
 
 function speciesCountChart(year) {
 	year = cleanYear(year);
@@ -269,27 +312,39 @@ function speciesCountChart(year) {
 		.attr("transform", `translate(0, ${chartHeight})`)
 		.call(d3.axisBottom(yearAxis));
 
+	/*
 	const countRange = d3.extent(yearSpeciesData, d => +d.SpeciesTotal);
 	const countAxis = d3.scaleLinear()
 		.domain(countRange)
 		.range([chartHeight, 0]);
 	chartGroup2.append("g")
 		.call(d3.axisLeft(countAxis));
+	*/
+
+	const percentAxis = d3.scaleLinear()
+		.domain([0, 1])
+		.range([chartHeight, 0]);
+	chartGroup2.append("g")
+		.call(d3.axisLeft(percentAxis)
+			.tickFormat(v => v * 100 + "%")
+		)
 
 	const data = d3.group(truncateData(yearSpeciesData, { max: +year + 1 }),
 		d => d.Aou);
 
-	const g = chartGroup2.append("g");
+	const g = chartGroup2.append("g")
+		.attr("stroke-width", 3)
+		.attr("fill", "none");
 	g.selectAll("path")
 		.data(data)
 		.enter()
 		.append("path")
-		.attr("stroke", (_, i) => ["red", "green", "yellow", "blue", "orange"][i % 3])
-		.attr("fill", "none")
+		.attr("stroke", (_, i) => ["red", "green", "yellow", "blue", "orange"][i % 5])
 		.attr("d", d => {
+			const max = d3.max(d[1], d => +d.SpeciesTotal);
 			return d3.line()
 				.x(d => yearAxis(yearParser(d.Year)))
-				.y(d => countAxis(+d.SpeciesTotal))(d[1]);
+				.y(d => percentAxis(d.SpeciesTotal / max))(d[1]);
 		});
 }
 
