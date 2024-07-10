@@ -43,7 +43,7 @@
 					border: 1px solid black;
 				}
 			}
-			.section {
+			section {
 				background-color: rgba(233, 233, 233, 0.8);
 			}
 			.scene {
@@ -106,7 +106,7 @@
 			<a id="link" style="font-size: 0.5rem; color:grey">Read more on Wikipedia</a>
 		</div>
 		<div id="content" style="margin: 0 15vw;">
-			<div id="intro" class="section title" style="height: 100vh">
+			<section id="intro" class="title" style="height: 100vh">
 				<h1 style="text-align: center">
 					A Look at the 2023 North American Bird Breeding Survey
 					Dataset
@@ -117,8 +117,8 @@
 					</a>
 				</h2>
 				<div id="loading">Loading...</div>
-			</div>
-			<div id="chart-scene" class="scene section">
+			</section>
+			<section id="chart-scene" class="scene">
 				<div class="scene-centerer overlay">
 					<p>
 						The <a href="https://www.pwrc.usgs.gov/bbs/">North
@@ -138,9 +138,9 @@
 					</p>
 					<div id="chart-container" class="container"></div>
 				</div>
-			</div>
+			</section>
 			<div style="height: 200vh" class="scroll-anim"></div>
-			<div id="map-scene" class="scene section">
+			<section id="map-scene" class="scene">
 				<div class="scene-centerer">
 					<p>
 						While total bird sightings has increased historically, this
@@ -160,9 +160,9 @@
 					</p>
 					<div id="map-container" class="container"></div>
 				</div>
-			</div>
+			</section>
 			<div style="height: 500vh" class="scroll-anim"></div>
-			<div id="chart-scene-2" class="scene section" style="height: max(auto,
+			<section id="chart-scene-2" class="scene" style="height: max(auto,
 					 100vh);">
 				<div class="scene-centerer overlay">
 					<p>
@@ -191,7 +191,7 @@
 					</div>
 					<div id="chart-container-2" class="container"></div>
 				</div>
-			</div>
+			</section>
 		</div>
 	</body>
 </html>
