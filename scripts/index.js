@@ -411,7 +411,8 @@ const aouData = {
 			"1900s due to overhunting. Nowadays, the greatest threat to the " +
 			"species is habitat loss when converting prairies to farmland. In " +
 			"2006, the Central Wisconsin Prairie Chicken Festival was started " +
-			"to bring awareness to this bird.",
+			"to bring awareness to this bird; Wisconsin also manages a greater " +
+			"prairie-chicken habitat.",
 		url: "https://en.wikipedia.org/wiki/Greater_prairie-chicken",
 		color: "#f9ba21",
 	},
